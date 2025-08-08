@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI NPC Dialogue Generator</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Roboto+Mono&display=swap" rel="stylesheet" />
+
+  <style>
+    /* Reset & base */
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      background: linear-gradient(135deg, #1f1f38, #2b2b56);
+      color: #f0f0f5;
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      font-weight: 700;
+      font-size: 2.8rem;
+      margin-bottom: 0.5rem;
+      color: #61dafb;
+      text-shadow: 0 0 15px rgba(97, 218, 251, 0.7);
+      animation: glowTitle 3s ease-in-out infinite alternate;
+    }
+    @keyframes glowTitle {
+      from {
+        text-shadow: 0 0 10px #61dafb, 0 0 20px #61dafb, 0 0 30px #61dafb;
+      }
+      to {
+        text-shadow: 0 0 25px #00c3ff, 0 0 40px #00c3ff, 0 0 60px #00c3ff;
+      }
+    }
+    form {
+      background: #212245cc;
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      box-shadow: 0 15px 40px rgba(0, 195, 255, 0.3);
+      padding: 2.5rem 2rem 3rem;
+      max-width: 700px;
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+      animation: fadeSlideIn 0.7s ease forwards;
+    }
+    @keyframes fadeSlideIn {
+      0% {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #a3d9ffcc;
+      transition: color 0.3s;
+      cursor: pointer;
+      user-select: none;
+    }
+    label:hover {
+      color: #61dafbcc;
+    }
+    select, textarea {
+      width: 100%;
+      font-family: 'Poppins', sans-serif;
+      font-size: 1rem;
+      background-color: #2f3b6e;
+      color: #d6e7ff;
+      border: none;
+      border-radius: 12px;
+      padding: 0.75rem 1.1rem;
+      margin-bottom: 1.5rem;
+      resize: vertical;
+      min-height: 90px;
+      box-shadow: inset 0 2px 5px rgba(30, 45, 90, 0.7);
+      transition: box-shadow 0.3s;
+      outline-offset: 4px;
+      outline-color: transparent;
+    }
+    select:focus, textarea:focus {
+      outline-color: #61dafb;
+      box-shadow: inset 0 2px 8px #00c3ffaa, 0 0 10px #00c3ff88;
+      background-color: #3951a1;
+    }
+    select:hover, textarea:hover {
+      box-shadow: inset 0 2px 8px rgba(97, 218, 251, 0.7);
+    }
+    button {
+      background: linear-gradient(90deg, #00c3ff 0%, #007caf 100%);
+      color: #f0f0f5;
+      font-size: 1.25rem;
+      font-weight: 700;
+      padding: 1rem 0;
+      width: 100%;
+      border-radius: 30px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 6px 14px rgba(0, 195, 255, 0.7);
+      transition: background 0.4s ease, transform 0.2s ease;
+      user-select: none;
+      margin-top: 1rem;
+    }
+    button:hover {
+      background: linear-gradient(90deg, #007caf 0%, #00c3ff 100%);
+      transform: scale(1.05);
+      box-shadow: 0 8px 20px rgba(0, 195, 255, 0.9);
+    }
+    button:active {
+      transform: scale(0.98);
+    }
+
+    /* Loading overlay */
+    #loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 30, 60, 0.7);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
+    .loader {
+      border: 8px solid #1a293d;
+      border-top: 8px solid #00c3ff;
+      border-radius: 50%;
+      width: 70px;
+      height: 70px;
+      animation: spin 1.2s linear infinite;
+      box-shadow: 0 0 15px #00c3ffaa;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Dynamic placeholder cycling animation */
+    @keyframes placeholderFade {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    textarea::placeholder, select::placeholder {
+      transition: opacity 0.5s ease;
+    }
+
+    /* Response box */
+    #response-container {
+      margin-top: 2.5rem;
+      max-width: 700px;
+      width: 100%;
+      padding: 1.75rem 2rem;
+      background: #1c274f;
+      border-radius: 14px;
+      box-shadow: 0 10px 25px rgba(0, 195, 255, 0.25);
+      font-family: 'Roboto Mono', monospace;
+      font-size: 1.1rem;
+      color: #a5c8ffdd;
+      min-height: 120px;
+      white-space: pre-wrap;
+      line-height: 1.5;
+      user-select: text;
+      opacity: 0;
+      transform: translateY(15px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+      position: relative;
+    }
+    #response-container.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    #response-container strong {
+      color: #61dafb;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <h1>AI NPC Dialogue Generator</h1>
+
+  <form id="npc-form" method="post" autocomplete="off" novalidate>
+    <label for="characterType">Select NPC Character Type</label>
+    <select name="characterType" id="characterType" required>
+      <option value="" disabled selected>Choose a character type...</option>
+      <option value="Pirate" {% if request.form.get('characterType') == 'Pirate' %}selected{% endif %}>Pirate</option>
+      <option value="Wizard" {% if request.form.get('characterType') == 'Wizard' %}selected{% endif %}>Wizard</option>
+      <option value="Merchant" {% if request.form.get('characterType') == 'Merchant' %}selected{% endif %}>Merchant</option>
+      <option value="Guard" {% if request.form.get('characterType') == 'Guard' %}selected{% endif %}>Guard</option>
+      <option value="Villager" {% if request.form.get('characterType') == 'Villager' %}selected{% endif %}>Villager</option>
+      <option value="Noble" {% if request.form.get('characterType') == 'Noble' %}selected{% endif %}>Noble</option>
+    </select>
+
+    <label for="dialogueStyle">Select Dialogue Style</label>
+    <select name="dialogueStyle" id="dialogueStyle" required>
+      <option value="" disabled selected>Choose a dialogue style...</option>
+      <option value="Natural" {% if request.form.get('dialogueStyle') == 'Natural' %}selected{% endif %}>Natural</option>
+      <option value="Formal" {% if request.form.get('dialogueStyle') == 'Formal' %}selected{% endif %}>Formal</option>
+      <option value="Sarcastic" {% if request.form.get('dialogueStyle') == 'Sarcastic' %}selected{% endif %}>Sarcastic</option>
+      <option value="Friendly" {% if request.form.get('dialogueStyle') == 'Friendly' %}selected{% endif %}>Friendly</option>
+      <option value="Grumpy" {% if request.form.get('dialogueStyle') == 'Grumpy' %}selected{% endif %}>Grumpy</option>
+    </select>
+
+    <label for="profile">Character Profile (traits, background, personality)</label>
+    <textarea
+      name="profile"
+      id="profile"
+      rows="4"
+      placeholder="E.g. Gruff, loyal pirate captain, sea-worn, superstitious..."
+      required
+      >{{ request.form.get('profile', '') }}</textarea
+    >
+
+    <label for="scenario">Scenario / Player Input</label>
+    <textarea
+      name="scenario"
+      id="scenario"
+      rows="4"
+      placeholder="E.g. Player says, 'Why do you always stare at the sea?'"
+      required
+      >{{ request.form.get('scenario', '') }}</textarea
+    >
+
+    <button type="submit">Generate Dialogue</button>
+  </form>
+
+  <div id="loading-overlay">
+    <div class="loader" aria-label="Loading spinner"></div>
+  </div>
+
+  {% if dialogue %}
+  <div id="response-container" aria-live="polite" aria-atomic="true"></div>
+  {% endif %}
+
+  <script>
+    const form = document.getElementById("npc-form");
+    const loadingOverlay = document.getElementById("loading-overlay");
+    const responseContainer = document.getElementById("response-container");
+
+    // Show overlay on submit
+    form.addEventListener("submit", () => {
+      loadingOverlay.style.display = "flex";
+      if (responseContainer) {
+        responseContainer.classList.remove("visible");
+        responseContainer.textContent = "";
+      }
+    });
+
+    // After page load, if response exists, animate typing effect
+    document.addEventListener("DOMContentLoaded", () => {
+      {% if dialogue %}
+      const dialogueText = {{ dialogue|tojson|safe }};
+      if (responseContainer) {
+        typeWriter(dialogueText, responseContainer);
+      }
+      {% endif %}
+    });
+
+    // Typing effect function
+    function typeWriter(text, element, i = 0) {
+      if (i < text.length) {
+        element.textContent += text.charAt(i);
+        setTimeout(() => typeWriter(text, element, i + 1), 30);
+      } else {
+        element.classList.add("visible");
+        // Hide loading spinner after typing done
+        loadingOverlay.style.display = "none";
+      }
+    }
+
+    // Dynamic placeholder cycling for profile and scenario fields
+    const profiles = [
+      "Gruff, loyal pirate captain, sea-worn, superstitious...",
+      "Wise old wizard with a tendency for sarcasm.",
+      "Shady merchant with a quick tongue and a quicker dagger.",
+      "Loyal city guard, weary but vigilant.",
+      "Kind villager with a secret past.",
+      "Noble of a distant land, proud and formal."
+    ];
+    const scenarios = [
+      "Player says, 'Why do you always stare at the sea?'",
+      "Player asks, 'What is your secret?'",
+      "Player demands, 'Tell me about the treasure.'",
+      "Player replies, 'I don't trust you.'",
+      "Player whispers, 'Is it true about the curse?'",
+      "Player shouts, 'Stop right there!'"
+    ];
+
+    const profileInput = document.getElementById("profile");
+    const scenarioInput = document.getElementById("scenario");
+
+    let profileIndex = 0;
+    let scenarioIndex = 0;
+
+    if (profileInput && scenarioInput) {
+      if (!profileInput.value.trim()) {
+        cyclePlaceholder(profileInput, profiles, 5000);
+      }
+      if (!scenarioInput.value.trim()) {
+        cyclePlaceholder(scenarioInput, scenarios, 5000);
+      }
+    }
+
+    function cyclePlaceholder(element, array, interval) {
+      element.placeholder = array[0];
+      let idx = 1;
+      setInterval(() => {
+        element.animate([{ opacity: 0 }, { opacity: 1 }], {
+          duration: 800,
+          fill: "forwards",
+        });
+        element.placeholder = array[idx];
+        idx = (idx + 1) % array.length;
+      }, interval);
+    }
+  </script>
+</body>
+</html>
